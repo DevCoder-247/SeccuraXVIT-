@@ -30,7 +30,11 @@ flowchart TD
 
 ### What happens:
 1. User opens the Streamlit app in their browser
+<<<<<<< HEAD
 2. In the **sidebar**, they enter their Google AI API Key (stored in `os.environ["GOOGLE_API_KEY"]`)
+=======
+2. The app reads the Google AI API Key from `.env` into `os.environ["GOOGLE_API_KEY"]`
+>>>>>>> 9172dd2 (Frontend Updates)
 3. They upload one or more files via `st.file_uploader` (supports: `png`, `jpg`, `jpeg`, `pdf`, `bmp`, `tiff`)
 
 ### PDF → Image Conversion:

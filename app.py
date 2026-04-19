@@ -226,13 +226,46 @@ h1, h2, h3, h4, h5 {
 .log-detail { color: var(--text); flex: 1; word-break: break-word; }
 
 /* ── Upload box ── */
+<<<<<<< HEAD
 [data-testid="stFileUploader"] {
+=======
+/* Keep container untouched */
+[data-testid="stFileUploader"] {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Style ONLY the dropzone */
+[data-testid="stFileUploader"] section {
+>>>>>>> 9172dd2 (Frontend Updates)
     background: var(--bg-card2) !important;
     border: 2px dashed var(--border) !important;
     border-radius: 10px !important;
     padding: 1rem !important;
 }
 
+<<<<<<< HEAD
+=======
+/* Fix button overlap explicitly */
+[data-testid="stFileUploader"] button {
+    position: relative !important;
+    z-index: 2 !important;
+    width: 100% !important;
+}
+
+/* Hide default button text spans */
+[data-testid="stFileUploader"] button span {
+    font-size: 0 !important;
+}
+
+/* Add custom text via pseudo-element */
+[data-testid="stFileUploader"] button::after {
+    font-size: 0.875rem !important;
+}
+
+
+>>>>>>> 9172dd2 (Frontend Updates)
 /* ── Spinner ── */
 .stSpinner > div { border-top-color: var(--accent) !important; }
 
@@ -343,6 +376,63 @@ def render_log_entry(log: dict):
     """, unsafe_allow_html=True)
 
 
+<<<<<<< HEAD
+=======
+def generate_overlay_image(original_b64: str, final_results: dict, human_decisions: dict = None) -> str:
+    """Generate image with overlays based on verification status."""
+    from PIL import Image, ImageDraw
+    import io
+
+    human_decisions = human_decisions or {}
+
+    # Decode original image
+    img_data = base64.b64decode(original_b64)
+    img = Image.open(io.BytesIO(img_data))
+    draw = ImageDraw.Draw(img, 'RGBA')
+
+    width, height = img.size
+
+    # Colors for overlays (with transparency)
+    colors = {
+        "verified": (0, 200, 150, 100),      # green
+        "invalid": (255, 71, 87, 100),       # red
+        "unverifiable": (255, 179, 0, 100),  # amber
+        "human_approved": (0, 200, 150, 100), # green
+        "human_rejected": (255, 71, 87, 100), # red
+    }
+
+    for field_name, field_data in final_results.items():
+        bbox = field_data.get("bbox")
+        if not bbox or len(bbox) != 4:
+            continue
+
+        status = field_data.get("status", "unverifiable")
+        if field_name in human_decisions:
+            decision = human_decisions[field_name].get("decision")
+            status = "human_approved" if decision == "approve" else "human_rejected"
+
+        if status not in colors:
+            status = "unverifiable"
+
+        # Denormalize bbox
+        x1, y1, x2, y2 = bbox
+        x1 = int(x1 * width)
+        y1 = int(y1 * height)
+        x2 = int(x2 * width)
+        y2 = int(y2 * height)
+
+        # Draw rectangle
+        draw.rectangle([x1, y1, x2, y2], fill=colors[status])
+
+    # Save to bytes
+    output = io.BytesIO()
+    img.save(output, format='PNG')
+    output.seek(0)
+    overlay_b64 = base64.b64encode(output.getvalue()).decode('utf-8')
+    return overlay_b64
+
+
+>>>>>>> 9172dd2 (Frontend Updates)
 def verdict_html(verdict: str, confidence: float, summary: str) -> str:
     cls_map = {
         "APPROVED": "verdict-approved",
@@ -383,6 +473,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+<<<<<<< HEAD
     # API Key input
     st.markdown('<div class="card-header">Configuration</div>', unsafe_allow_html=True)
     api_key_input = st.text_input(
@@ -398,11 +489,28 @@ with st.sidebar:
         st.session_state.api_key_set = True
 
     st.markdown("---")
+=======
+    # # Configuration
+    # st.markdown('<div class="card-header">Configuration</div>', unsafe_allow_html=True)
+    # has_api_key = bool(os.environ.get("GOOGLE_API_KEY"))
+    # if has_api_key:
+    #     st.success("Google AI API Key loaded from environment.")
+    # else:
+    #     st.warning(
+    #         "Set `GOOGLE_API_KEY` in your `.env` file and restart the app to enable verification."
+    #     )
+
+    # st.markdown("---")
+>>>>>>> 9172dd2 (Frontend Updates)
 
     # Upload
     st.markdown('<div class="card-header">Upload Documents</div>', unsafe_allow_html=True)
     uploaded = st.file_uploader(
+<<<<<<< HEAD
         "Upload certificate / ID",
+=======
+        "",
+>>>>>>> 9172dd2 (Frontend Updates)
         type=["png", "jpg", "jpeg", "pdf", "bmp", "tiff"],
         accept_multiple_files=True,
         label_visibility="collapsed",
@@ -480,7 +588,10 @@ col1, col2, col3 = st.columns([2, 1, 2])
 with col2:
     can_verify = (
         bool(st.session_state.selected_doc)
+<<<<<<< HEAD
         and bool(api_key_input or os.environ.get("GOOGLE_API_KEY"))
+=======
+>>>>>>> 9172dd2 (Frontend Updates)
         and not st.session_state.is_verifying
     )
     verify_btn = st.button(
@@ -493,8 +604,13 @@ with col2:
 if not st.session_state.selected_doc:
     st.info("Upload a document and select it from the sidebar to begin verification.")
 
+<<<<<<< HEAD
 if not (api_key_input or os.environ.get("GOOGLE_API_KEY")):
     st.warning("Please enter your Google AI API Key in the sidebar to enable verification.")
+=======
+# if not has_api_key:
+#     st.warning("Set `GOOGLE_API_KEY` in your `.env` file to enable verification.")
+>>>>>>> 9172dd2 (Frontend Updates)
 
 # ─── Run Verification ─────────────────────────────────────────────────────────
 if verify_btn and can_verify:
@@ -566,7 +682,11 @@ if result:
         if status in ("invalid", "unverifiable") and fname not in human_decisions:
             fields_needing_review.append(fname)
 
+<<<<<<< HEAD
     tabs = st.tabs(["📊 Verification Results", "🔍 Logs & Audit Trail", "👤 Human Review"])
+=======
+    tabs = st.tabs(["📊 Verification Results", "🔍 Logs & Audit Trail", "👤 Human Review", "🖼️ Document Overlay"])
+>>>>>>> 9172dd2 (Frontend Updates)
 
     # ─── Tab 1: Results ───────────────────────────────────────────────────────
     with tabs[0]:
@@ -859,6 +979,33 @@ if result:
                             "level": "SUCCESS" if dec["decision"] == "approve" else "WARNING",
                         })
 
+<<<<<<< HEAD
+=======
+    # ─── Tab 4: Document Overlay ──────────────────────────────────────────────
+    with tabs[3]:
+        st.markdown("#### 🖼️ Document with Verification Overlays")
+        st.markdown("""
+        <p style="font-size:0.85rem; color:var(--text-dim)">
+        Verified fields are highlighted in <b style="color:#00c896">green</b>,
+        invalid fields in <b style="color:#ff4757">red</b>,
+        and unverifiable fields in <b style="color:#ffb300">amber</b>.
+        Human-approved fields are also shown in green, human-rejected in red.
+        <br><em>Note: Image displayed at original size for accurate overlay positioning.</em>
+        </p>
+        """, unsafe_allow_html=True)
+
+        # Generate overlay image
+        original_b64 = st.session_state.uploaded_docs.get(st.session_state.selected_doc, "")
+        if original_b64 and final_results:
+            try:
+                overlay_b64 = generate_overlay_image(original_b64, final_results, human_decisions)
+                st.image(f"data:image/png;base64,{overlay_b64}", caption="Document with Verification Overlays", use_column_width=False)
+            except Exception as e:
+                st.error(f"Failed to generate overlay: {e}")
+        else:
+            st.info("No document or verification results available.")
+
+>>>>>>> 9172dd2 (Frontend Updates)
 # ─── Empty state ─────────────────────────────────────────────────────────────
 elif not st.session_state.is_verifying:
     # Hero info

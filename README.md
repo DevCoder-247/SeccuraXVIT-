@@ -193,7 +193,11 @@ python run.py --port-api 9000 --port-ui 9501
 
 1. Open your browser and navigate to: **http://localhost:8501**
 2. The Streamlit UI will load with the DocVerify AI interface.
+<<<<<<< HEAD
 3. If you didn't set the API key in `.env`, enter it in the **sidebar** under "Configuration".
+=======
+3. If you didn't set the API key in `.env`, add it there and restart the app.
+>>>>>>> 9172dd2 (Frontend Updates)
 
 ---
 
@@ -253,12 +257,21 @@ REGISTERED_CLIENTS = [
 
 ## 🔍 Field Status Logic
 
+<<<<<<< HEAD
 | Status | Color | Meaning |
 |--------|-------|---------|
 | Verified | 🟢 Green | API found record and fields match |
 | Invalid | 🔴 Red | NOT_FOUND in DB, or data mismatch |
 | Unverifiable | 🟡 Amber | API unreachable, partial match |
 | Human Approved | 🔵 Blue | Manual reviewer approved |
+=======
+| Status         | Color    | Meaning                           |
+| -------------- | -------- | --------------------------------- |
+| Verified       | 🟢 Green | API found record and fields match |
+| Invalid        | 🔴 Red   | NOT_FOUND in DB, or data mismatch |
+| Unverifiable   | 🟡 Amber | API unreachable, partial match    |
+| Human Approved | 🔵 Blue  | Manual reviewer approved          |
+>>>>>>> 9172dd2 (Frontend Updates)
 
 ---
 
@@ -266,6 +279,7 @@ REGISTERED_CLIENTS = [
 
 **Test students (use these to test verification):**
 
+<<<<<<< HEAD
 | Name | PRN | College | Passing Year |
 |------|-----|---------|--------------|
 | Priya Sharma | 1234567890 | MIT Pune | 2023 |
@@ -274,11 +288,22 @@ REGISTERED_CLIENTS = [
 | Sneha Patil | 3344556677 | COEP Pune | 2021 |
 | Arjun Nair | 7788990011 | IIT Bombay | 2025 |
 | Kavya Desai | 2233445566 | Symbiosis Pune | 2024 |
+=======
+| Name            | PRN        | College        | Passing Year |
+| --------------- | ---------- | -------------- | ------------ |
+| Priya Sharma    | 1234567890 | MIT Pune       | 2023         |
+| Aditya Kulkarni | 9876543211 | MIT Pune       | 2024         |
+| Rohan Mehta     | 5555123456 | VJTI Mumbai    | 2022         |
+| Sneha Patil     | 3344556677 | COEP Pune      | 2021         |
+| Arjun Nair      | 7788990011 | IIT Bombay     | 2025         |
+| Kavya Desai     | 2233445566 | Symbiosis Pune | 2024         |
+>>>>>>> 9172dd2 (Frontend Updates)
 
 ---
 
 ## 🛠️ Troubleshooting
 
+<<<<<<< HEAD
 | Issue | Solution |
 |-------|----------|
 | `ModuleNotFoundError: No module named 'uvicorn'` | Run `pip install uvicorn` |
@@ -289,6 +314,18 @@ REGISTERED_CLIENTS = [
 | Backend unreachable (amber status) | Ensure backend is running (`python run.py` or `--backend-only`) |
 | Port already in use | Use `--port-api` / `--port-ui` flags to change ports |
 | `Ctrl+C` doesn't stop services | Close the terminal window, or kill Python processes manually |
+=======
+| Issue                                               | Solution                                                                                |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `ModuleNotFoundError: No module named 'uvicorn'`  | Run `pip install uvicorn`                                                             |
+| `ModuleNotFoundError: No module named 'fastapi'`  | Run `pip install fastapi`                                                             |
+| `ModuleNotFoundError: No module named 'requests'` | Run `pip install requests`                                                            |
+| API key error / Gemini auth failure                 | Verify your `GOOGLE_API_KEY` is valid at [AI Studio](https://aistudio.google.com/apikey) |
+| PDF upload shows warning                            | Install PyMuPDF:`pip install pymupdf`                                                 |
+| Backend unreachable (amber status)                  | Ensure backend is running (`python run.py` or `--backend-only`)                     |
+| Port already in use                                 | Use `--port-api` / `--port-ui` flags to change ports                                |
+| `Ctrl+C` doesn't stop services                    | Close the terminal window, or kill Python processes manually                            |
+>>>>>>> 9172dd2 (Frontend Updates)
 
 ---
 

@@ -95,6 +95,10 @@ Produce the final verification decision."""
 
         field_decisions = decision.get("field_decisions", {})
         final_results: dict[str, FieldResult] = {}
+<<<<<<< HEAD
+=======
+        bboxes = state.get("field_bboxes", {})
+>>>>>>> 9172dd2 (Frontend Updates)
 
         for field, data in field_decisions.items():
             status = data.get("final_status", "unverifiable")
@@ -107,6 +111,10 @@ Produce the final verification decision."""
                 reason=reasoning,
                 agent="DecisionSupportAgent",
                 confidence=confidence,
+<<<<<<< HEAD
+=======
+                bbox=bboxes.get(field),
+>>>>>>> 9172dd2 (Frontend Updates)
             )
 
             icon = {"verified": "✓", "invalid": "✗", "unverifiable": "?"}.get(status, "?")

@@ -5,6 +5,9 @@ from agents.forgery_agent import forgery_detection_agent
 from agents.kyc_agent import kyc_agent
 from agents.decision_agent import decision_support_agent
 from utils.logger import make_log
+import asyncio
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
 
 
 def should_continue_after_extraction(state: VerificationState) -> str:
@@ -14,14 +17,40 @@ def should_continue_after_extraction(state: VerificationState) -> str:
     return "continue"
 
 
+def parallel_verification_agents(state: VerificationState) -> dict:
+    """
+    Run forgery detection and KYC verification in parallel.
+    Both agents are independent and only depend on extracted_fields.
+    """
+    # Run both agents concurrently using ThreadPoolExecutor
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        # Submit both agents to run in parallel
+        forgery_future = executor.submit(forgery_detection_agent, state)
+        kyc_future = executor.submit(kyc_agent, state)
+        
+        # Wait for both to complete
+        forgery_result = forgery_future.result()
+        kyc_result = kyc_future.result()
+    
+    # Merge results
+    merged_logs = state.get("logs", [])
+    merged_logs.extend(forgery_result.get("logs", []))
+    merged_logs.extend(kyc_result.get("logs", []))
+    
+    return {
+        "forgery_results": forgery_result.get("forgery_results", {}),
+        "kyc_results": kyc_result.get("kyc_results", {}),
+        "logs": merged_logs,
+    }
+
+
 def build_verification_graph():
-    """Build and compile the LangGraph verification workflow."""
+    """Build and compile the LangGraph verification workflow with parallel agents."""
     workflow = StateGraph(VerificationState)
 
     # Add nodes
     workflow.add_node("extraction", extraction_agent)
-    workflow.add_node("forgery_detection", forgery_detection_agent)
-    workflow.add_node("kyc_verification", kyc_agent)
+    workflow.add_node("parallel_agents", parallel_verification_agents)  # Combines forgery + kyc in parallel
     workflow.add_node("decision_support", decision_support_agent)
 
     # Entry point
@@ -32,14 +61,13 @@ def build_verification_graph():
         "extraction",
         should_continue_after_extraction,
         {
-            "continue": "forgery_detection",
+            "continue": "parallel_agents",
             "end": END,
         },
     )
 
-    # Run forgery and KYC in sequence (LangGraph doesn't natively parallel without send API)
-    workflow.add_edge("forgery_detection", "kyc_verification")
-    workflow.add_edge("kyc_verification", "decision_support")
+    # Run parallel agents, then decision support
+    workflow.add_edge("parallel_agents", "decision_support")
     workflow.add_edge("decision_support", END)
 
     return workflow.compile()

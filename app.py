@@ -13,12 +13,16 @@ from io import BytesIO
 
 import streamlit as st
 from PIL import Image
+import textwrap
 from dotenv import load_dotenv
 
 # ─── Path setup ──────────────────────────────────────────────────────────────
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 load_dotenv()
+
+# ─── Import agents ───────────────────────────────────────────────────────────
+from agents.overlay_agent import refine_overlay_bboxes, generate_precision_overlay_image
 
 # ─── Page config (must be first Streamlit call) ───────────────────────────────
 st.set_page_config(
@@ -63,7 +67,7 @@ html, body, .stApp {
     background: var(--bg-card) !important;
     border-right: 1px solid var(--border) !important;
 }
-[data-testid="stSidebar"] * { font-family: 'Space Grotesk', sans-serif !important; }
+[data-testid="stSidebar"] { font-family: 'Space Grotesk', sans-serif !important; }
 
 /* ── Headings ── */
 h1, h2, h3, h4, h5 {
@@ -325,6 +329,18 @@ def img_to_base64(file_bytes: bytes) -> str:
     return base64.b64encode(file_bytes).decode("utf-8")
 
 
+def escape_html(text: str) -> str:
+    """Escape HTML special characters to prevent markup breaking."""
+    if not isinstance(text, str):
+        text = str(text)
+    return (text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&#39;"))
+
+
 def status_badge(status: str) -> str:
     labels = {
         "verified": "✓ Verified",
@@ -341,20 +357,25 @@ def render_field_row(field_name: str, field_data: dict, human_override: dict = N
     if human_override:
         status = "human_approved" if human_override.get("decision") == "approve" else "human_rejected"
 
-    value = field_data.get("value", "—")
-    reason = field_data.get("reason", "")
+    value = escape_html(field_data.get("value", "—"))
+    reason = escape_html(field_data.get("reason", ""))
+    # value = field_data.get("value", "—")
+    # reason = field_data.get("reason", "")
     confidence = field_data.get("confidence", 0)
     display_name = field_name.replace("_", " ").title()
 
-    st.markdown(f"""
-    <div class="field-row field-{status}">
-        <span class="badge badge-{status}">{status_badge(status)}</span>
-        <span class="field-name-label">{display_name}</span>
-        <span class="field-value-label">{value or "—"}</span>
-        <span class="field-reason-label">{reason}</span>
-        <span style="font-size:0.7rem; color: var(--text-dim); flex-shrink:0;">{confidence:.0%}</span>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        textwrap.dedent(f"""
+            <div class="field-row field-{status}">
+                <span class="badge badge-{status}">{status_badge(status)}</span>
+                <span class="field-name-label">{escape_html(display_name)}</span>
+                <span class="field-value-label">{value or "—"}</span>
+                <span class="field-reason-label">{reason}</span>
+                <span style="font-size:0.7rem; color: var(--text-dim); flex-shrink:0;">{confidence:.0%}</span>
+            </div>
+        """),
+        unsafe_allow_html=True
+    )
 
 
 def render_log_entry(log: dict):
@@ -364,7 +385,7 @@ def render_log_entry(log: dict):
         <span class="log-ts">{log.get('timestamp','')}</span>
         <span class="log-agent">{log.get('agent','')}</span>
         <span class="log-action">{log.get('action','')}</span>
-        <span class="log-detail">{log.get('details','')}</span>
+        <span class="log-detail">{escape_html(log.get('details',''))}</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -383,13 +404,22 @@ def generate_overlay_image(original_b64: str, final_results: dict, human_decisio
 
     width, height = img.size
 
-    # Colors for overlays (with transparency)
+    # Color scheme for overlays (RGBA with better visibility)
     colors = {
-        "verified": (0, 200, 150, 100),      # green
-        "invalid": (255, 71, 87, 100),       # red
-        "unverifiable": (255, 179, 0, 100),  # amber
-        "human_approved": (0, 200, 150, 100), # green
-        "human_rejected": (255, 71, 87, 100), # red
+        "verified": (0, 200, 150, 200),       # green - opaque border + light fill
+        "invalid": (255, 71, 87, 200),        # red
+        "unverifiable": (255, 179, 0, 200),   # amber
+        "human_approved": (0, 200, 150, 200), # green
+        "human_rejected": (255, 71, 87, 200), # red
+    }
+
+    # Light fill versions (for background fill)
+    fill_colors = {
+        "verified": (0, 200, 150, 40),       # light green fill
+        "invalid": (255, 71, 87, 40),        # light red fill
+        "unverifiable": (255, 179, 0, 40),   # light amber fill
+        "human_approved": (0, 200, 150, 40), # light green fill
+        "human_rejected": (255, 71, 87, 40), # light red fill
     }
 
     for field_name, field_data in final_results.items():
@@ -405,15 +435,27 @@ def generate_overlay_image(original_b64: str, final_results: dict, human_decisio
         if status not in colors:
             status = "unverifiable"
 
-        # Denormalize bbox
+        # Denormalize bbox (convert from 0-1 to pixel coordinates)
         x1, y1, x2, y2 = bbox
         x1 = int(x1 * width)
         y1 = int(y1 * height)
         x2 = int(x2 * width)
         y2 = int(y2 * height)
 
-        # Draw rectangle
-        draw.rectangle([x1, y1, x2, y2], fill=colors[status])
+        # Ensure coordinates are valid
+        x1, x2 = min(x1, x2), max(x1, x2)
+        y1, y2 = min(y1, y2), max(y1, y2)
+
+        # Draw filled rectangle with light color
+        draw.rectangle([x1, y1, x2, y2], fill=fill_colors[status])
+        
+        # Draw border (outline) with solid color and thicker stroke
+        border_width = 3
+        draw.rectangle(
+            [x1, y1, x2, y2],
+            outline=colors[status],
+            width=border_width
+        )
 
     # Save to bytes
     output = io.BytesIO()
@@ -445,7 +487,7 @@ def verdict_html(verdict: str, confidence: float, summary: str) -> str:
         <div style="font-size:0.85rem; color:var(--text-dim); margin-top:0.4rem">
             Confidence: <b style="color:{color}">{confidence:.0%}</b>
         </div>
-        <div style="font-size:0.88rem; color:var(--text); margin-top:0.6rem; line-height:1.6">{summary}</div>
+        <div style="font-size:0.88rem; color:var(--text); margin-top:0.6rem; line-height:1.6">{escape_html(summary)}</div>
     </div>
     """
 
@@ -513,7 +555,7 @@ with st.sidebar:
             b64 = st.session_state.uploaded_docs[selected]
             img_bytes = base64.b64decode(b64)
             img = Image.open(BytesIO(img_bytes))
-            st.image(img, caption=selected, use_column_width=True)
+            st.image(img, caption=selected, use_container_width=True)
 
     # Clear button
     if st.session_state.uploaded_docs:
@@ -641,10 +683,74 @@ if result:
         if status in ("invalid", "unverifiable") and fname not in human_decisions:
             fields_needing_review.append(fname)
 
-    tabs = st.tabs(["📊 Verification Results", "🔍 Logs & Audit Trail", "👤 Human Review", "🖼️ Document Overlay"])
+    # Initialize overlay focus tracking
+    if "verification_just_completed" not in st.session_state:
+        st.session_state.verification_just_completed = True
+    
+    # Reorder tabs to show Overlay first if verification just completed
+    tab_names = ["📊 Verification Results", "🔍 Logs & Audit Trail", "👤 Human Review", "🖼️ Document Overlay"]
+    if st.session_state.verification_just_completed:
+        tab_names = ["🖼️ Document Overlay", "📊 Verification Results", "🔍 Logs & Audit Trail", "👤 Human Review"]
+        st.session_state.verification_just_completed = False  # Reset flag
+    
+    tabs = st.tabs(tab_names)
 
-    # ─── Tab 1: Results ───────────────────────────────────────────────────────
+    # ─── Tab 1: Overlay (shown first after verification) ─────────────────────
     with tabs[0]:
+        st.markdown("#### 🖼️ Document with Verification Overlays")
+        st.markdown("""
+        <p style="font-size:0.85rem; color:var(--text-dim)">
+        Verified fields are highlighted in <b style="color:#00c896">green</b>,
+        invalid fields in <b style="color:#ff4757">red</b>,
+        and unverifiable fields in <b style="color:#ffb300">amber</b>.
+        Human-approved fields are also shown in green, human-rejected in red.
+        <br><em>AI-refined precision overlays aligned to exact field boundaries.</em>
+        </p>
+        """, unsafe_allow_html=True)
+
+        # Generate overlay image
+        original_b64 = st.session_state.uploaded_docs.get(st.session_state.selected_doc, "")
+        if original_b64 and final_results:
+            try:
+                with st.spinner("🔄 Refining overlay alignment..."):
+                    extracted = result.get("extracted_fields", {})
+                    
+                    # Refine bounding boxes using overlay agent
+                    current_bboxes = {
+                        fname: fdata.get("bbox")
+                        for fname, fdata in final_results.items()
+                        if fdata.get("bbox")
+                    }
+                    
+                    refined_bboxes, overlay_logs = refine_overlay_bboxes(
+                        original_b64,
+                        extracted,
+                        current_bboxes
+                    )
+                    
+                    # Generate precise overlay with refined bboxes
+                    overlay_b64 = generate_precision_overlay_image(
+                        original_b64,
+                        final_results,
+                        refined_bboxes,
+                        human_decisions
+                    )
+                
+                st.image(f"data:image/png;base64,{overlay_b64}", caption="Document with Verification Overlays", use_container_width=False)
+            except Exception as e:
+                st.warning(f"⚠️ Refined overlays unavailable: {str(e)}")
+                st.info("Generating standard overlays...")
+                try:
+                    # Fallback to standard overlay
+                    overlay_b64 = generate_overlay_image(original_b64, final_results, human_decisions)
+                    st.image(f"data:image/png;base64,{overlay_b64}", caption="Document with Verification Overlays (Standard)", use_container_width=False)
+                except Exception as fallback_e:
+                    st.error(f"Failed to generate overlay: {fallback_e}")
+        else:
+            st.info("No document or verification results available.")
+
+    # ─── Tab 2: Results ───────────────────────────────────────────────────────
+    with tabs[1]:
         # Verdict banner
         st.markdown(verdict_html(verdict, confidence, summary), unsafe_allow_html=True)
 
@@ -722,8 +828,8 @@ if result:
             </div>
             """, unsafe_allow_html=True)
 
-    # ─── Tab 2: Logs ──────────────────────────────────────────────────────────
-    with tabs[1]:
+    # ─── Tab 3: Logs ──────────────────────────────────────────────────────────
+    with tabs[2]:
         st.markdown("#### 📋 Verification Audit Trail")
 
         # Download buttons
@@ -800,8 +906,8 @@ if result:
                 }
                 render_log_entry(log_entry)
 
-    # ─── Tab 3: Human Review ──────────────────────────────────────────────────
-    with tabs[2]:
+    # ─── Tab 4: Human Review ──────────────────────────────────────────────────
+    with tabs[3]:
         st.markdown("#### 👤 Human-in-the-Loop Review")
         st.markdown("""
         <p style="font-size:0.85rem; color:var(--text-dim)">
@@ -834,8 +940,10 @@ if result:
 
             for fname, fdata in all_review_fields:
                 status = fdata.get("status", "unverifiable")
-                value = fdata.get("value", "—")
-                reason = fdata.get("reason", "")
+                value = escape_html(fdata.get("value", "—"))
+                reason = escape_html(fdata.get("reason", ""))
+                # value = fdata.get("value", "—")
+                # reason = fdata.get("reason", "")
                 already_reviewed = fname in human_decisions
 
                 status_color = "var(--invalid)" if status == "invalid" else "var(--unverifiable)"
@@ -843,7 +951,8 @@ if result:
                 if already_reviewed:
                     d = human_decisions[fname]
                     rb_color = "var(--verified)" if d["decision"] == "approve" else "var(--invalid)"
-                    reviewed_badge = f'<span style="font-size:0.7rem; color:{rb_color}; font-weight:600">{"✓ APPROVED" if d["decision"] == "approve" else "✗ REJECTED"} by {d.get("reviewer","?")}</span>'
+                    reviewed_badge = f'<span style="font-size:0.7rem; color:{rb_color}; font-weight:600">{"✓ APPROVED" if d["decision"] == "approve" else "✗ REJECTED"} by {escape_html(d.get("reviewer","?"))}</span>'
+                    # reviewed_badge = f'<span style="font-size:0.7rem; color:{rb_color}; font-weight:600">{"✓ APPROVED" if d["decision"] == "approve" else "✗ REJECTED"} by {d.get("reviewer","?")}</span>'
 
                 st.markdown(f"""
                 <div class="review-card">
@@ -855,22 +964,13 @@ if result:
                         {reviewed_badge}
                     </div>
                     <div style="font-family:'JetBrains Mono',monospace; font-size:0.85rem; margin-bottom:0.5rem; color:var(--text)">
-                        Value: <b>{value}</b>
+                        Value: <b>{escape_html(value)}</b>
                     </div>
                     <div style="font-size:0.78rem; color:var(--text-dim); font-style:italic">
-                        Agent finding: {reason}
+                        Agent finding: {escape_html(reason)}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
-
-                # Document image alongside for reference
-                with st.expander(f"📄 View Document Image for Reference", expanded=False):
-                    b64 = st.session_state.uploaded_docs.get(st.session_state.selected_doc, "")
-                    if b64:
-                        img_bytes = base64.b64decode(b64)
-                        img = Image.open(BytesIO(img_bytes))
-                        st.image(img, use_column_width=True)
-                        # st.image(img, use_container_width=True)
 
                 col_a, col_b, col_c = st.columns([2, 1, 1])
                 with col_a:
@@ -933,30 +1033,6 @@ if result:
                             ),
                             "level": "SUCCESS" if dec["decision"] == "approve" else "WARNING",
                         })
-
-    # ─── Tab 4: Document Overlay ──────────────────────────────────────────────
-    with tabs[3]:
-        st.markdown("#### 🖼️ Document with Verification Overlays")
-        st.markdown("""
-        <p style="font-size:0.85rem; color:var(--text-dim)">
-        Verified fields are highlighted in <b style="color:#00c896">green</b>,
-        invalid fields in <b style="color:#ff4757">red</b>,
-        and unverifiable fields in <b style="color:#ffb300">amber</b>.
-        Human-approved fields are also shown in green, human-rejected in red.
-        <br><em>Note: Image displayed at original size for accurate overlay positioning.</em>
-        </p>
-        """, unsafe_allow_html=True)
-
-        # Generate overlay image
-        original_b64 = st.session_state.uploaded_docs.get(st.session_state.selected_doc, "")
-        if original_b64 and final_results:
-            try:
-                overlay_b64 = generate_overlay_image(original_b64, final_results, human_decisions)
-                st.image(f"data:image/png;base64,{overlay_b64}", caption="Document with Verification Overlays", use_column_width=False)
-            except Exception as e:
-                st.error(f"Failed to generate overlay: {e}")
-        else:
-            st.info("No document or verification results available.")
 
 # ─── Empty state ─────────────────────────────────────────────────────────────
 elif not st.session_state.is_verifying:

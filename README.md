@@ -16,12 +16,9 @@ A production-grade multi-agent document verification system with a **full backen
 | ![image1](https://github.com/Khilesh-01/SeccuraXVIT-POC/blob/kc-changes/assets/Verify-review.png) | ![image2](https://github.com/Khilesh-01/SeccuraXVIT-POC/blob/kc-changes/assets/Verify-rejected.png) |
 |-----------------------|-----------------------|
 | ![image3](https://github.com/Khilesh-01/SeccuraXVIT-POC/blob/kc-changes/assets/Verified-fields.png) | ![image4](https://github.com/Khilesh-01/SeccuraXVIT-POC/blob/kc-changes/assets/log.png) |
-|-----------------------|-----------------------|
 | ![image5](https://github.com/Khilesh-01/SeccuraXVIT-POC/blob/kc-changes/assets/Human-in-a-loop.png) | ![image6](https://github.com/Khilesh-01/SeccuraXVIT-POC/blob/kc-changes/assets/overlay.png) |
-|-----------------------|-----------------------|
 
 ---
-
 
 ## 🏗️ Full System Architecture
 

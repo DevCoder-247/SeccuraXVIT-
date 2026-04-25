@@ -226,9 +226,6 @@ h1, h2, h3, h4, h5 {
 .log-detail { color: var(--text); flex: 1; word-break: break-word; }
 
 /* ── Upload box ── */
-<<<<<<< HEAD
-[data-testid="stFileUploader"] {
-=======
 /* Keep container untouched */
 [data-testid="stFileUploader"] {
     background: transparent !important;
@@ -238,15 +235,12 @@ h1, h2, h3, h4, h5 {
 
 /* Style ONLY the dropzone */
 [data-testid="stFileUploader"] section {
->>>>>>> 9172dd2 (Frontend Updates)
     background: var(--bg-card2) !important;
     border: 2px dashed var(--border) !important;
     border-radius: 10px !important;
     padding: 1rem !important;
 }
 
-<<<<<<< HEAD
-=======
 /* Fix button overlap explicitly */
 [data-testid="stFileUploader"] button {
     position: relative !important;
@@ -265,7 +259,6 @@ h1, h2, h3, h4, h5 {
 }
 
 
->>>>>>> 9172dd2 (Frontend Updates)
 /* ── Spinner ── */
 .stSpinner > div { border-top-color: var(--accent) !important; }
 
@@ -376,8 +369,6 @@ def render_log_entry(log: dict):
     """, unsafe_allow_html=True)
 
 
-<<<<<<< HEAD
-=======
 def generate_overlay_image(original_b64: str, final_results: dict, human_decisions: dict = None) -> str:
     """Generate image with overlays based on verification status."""
     from PIL import Image, ImageDraw
@@ -432,7 +423,6 @@ def generate_overlay_image(original_b64: str, final_results: dict, human_decisio
     return overlay_b64
 
 
->>>>>>> 9172dd2 (Frontend Updates)
 def verdict_html(verdict: str, confidence: float, summary: str) -> str:
     cls_map = {
         "APPROVED": "verdict-approved",
@@ -473,23 +463,6 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-<<<<<<< HEAD
-    # API Key input
-    st.markdown('<div class="card-header">Configuration</div>', unsafe_allow_html=True)
-    api_key_input = st.text_input(
-        "Google AI API Key",
-        type="password",
-        placeholder="AIza...",
-        help="Get your key from Google AI Studio (aistudio.google.com)",
-        value=os.environ.get("GOOGLE_API_KEY", ""),
-    )
-    if api_key_input:
-        os.environ["GOOGLE_API_KEY"] = api_key_input
-        os.environ["LANGCHAIN_API_KEY"] = api_key_input
-        st.session_state.api_key_set = True
-
-    st.markdown("---")
-=======
     # # Configuration
     # st.markdown('<div class="card-header">Configuration</div>', unsafe_allow_html=True)
     # has_api_key = bool(os.environ.get("GOOGLE_API_KEY"))
@@ -501,16 +474,11 @@ with st.sidebar:
     #     )
 
     # st.markdown("---")
->>>>>>> 9172dd2 (Frontend Updates)
 
     # Upload
     st.markdown('<div class="card-header">Upload Documents</div>', unsafe_allow_html=True)
     uploaded = st.file_uploader(
-<<<<<<< HEAD
-        "Upload certificate / ID",
-=======
         "",
->>>>>>> 9172dd2 (Frontend Updates)
         type=["png", "jpg", "jpeg", "pdf", "bmp", "tiff"],
         accept_multiple_files=True,
         label_visibility="collapsed",
@@ -588,10 +556,6 @@ col1, col2, col3 = st.columns([2, 1, 2])
 with col2:
     can_verify = (
         bool(st.session_state.selected_doc)
-<<<<<<< HEAD
-        and bool(api_key_input or os.environ.get("GOOGLE_API_KEY"))
-=======
->>>>>>> 9172dd2 (Frontend Updates)
         and not st.session_state.is_verifying
     )
     verify_btn = st.button(
@@ -604,13 +568,8 @@ with col2:
 if not st.session_state.selected_doc:
     st.info("Upload a document and select it from the sidebar to begin verification.")
 
-<<<<<<< HEAD
-if not (api_key_input or os.environ.get("GOOGLE_API_KEY")):
-    st.warning("Please enter your Google AI API Key in the sidebar to enable verification.")
-=======
 # if not has_api_key:
 #     st.warning("Set `GOOGLE_API_KEY` in your `.env` file to enable verification.")
->>>>>>> 9172dd2 (Frontend Updates)
 
 # ─── Run Verification ─────────────────────────────────────────────────────────
 if verify_btn and can_verify:
@@ -682,11 +641,7 @@ if result:
         if status in ("invalid", "unverifiable") and fname not in human_decisions:
             fields_needing_review.append(fname)
 
-<<<<<<< HEAD
-    tabs = st.tabs(["📊 Verification Results", "🔍 Logs & Audit Trail", "👤 Human Review"])
-=======
     tabs = st.tabs(["📊 Verification Results", "🔍 Logs & Audit Trail", "👤 Human Review", "🖼️ Document Overlay"])
->>>>>>> 9172dd2 (Frontend Updates)
 
     # ─── Tab 1: Results ───────────────────────────────────────────────────────
     with tabs[0]:
@@ -979,8 +934,6 @@ if result:
                             "level": "SUCCESS" if dec["decision"] == "approve" else "WARNING",
                         })
 
-<<<<<<< HEAD
-=======
     # ─── Tab 4: Document Overlay ──────────────────────────────────────────────
     with tabs[3]:
         st.markdown("#### 🖼️ Document with Verification Overlays")
@@ -1005,7 +958,6 @@ if result:
         else:
             st.info("No document or verification results available.")
 
->>>>>>> 9172dd2 (Frontend Updates)
 # ─── Empty state ─────────────────────────────────────────────────────────────
 elif not st.session_state.is_verifying:
     # Hero info

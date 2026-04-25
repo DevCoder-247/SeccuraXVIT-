@@ -8,11 +8,7 @@ from agents.state import VerificationState
 from utils.logger import make_log
 
 EXTRACTION_SYSTEM = """You are an expert document information extraction agent.
-<<<<<<< HEAD
-Your task is to analyze a document image and extract ALL visible text fields and their values.
-=======
 Your task is to analyze a document image and extract ALL visible text fields and their values, along with their positions.
->>>>>>> 9172dd2 (Frontend Updates)
 
 Extract every identifiable field such as:
 - Full Name / Name on Document
@@ -27,15 +23,6 @@ Extract every identifiable field such as:
 - Gender
 - Any other relevant fields visible on the document
 
-<<<<<<< HEAD
-Return ONLY a valid JSON object. No markdown, no backticks, no explanation.
-Keys should be clean snake_case field names (e.g. "full_name", "date_of_birth").
-Values should be the extracted text exactly as it appears. 
-If a field is not found or not readable, use null.
-
-Example format:
-{"document_type": "Aadhaar Card", "full_name": "John Doe", "date_of_birth": "01/01/1990", "id_number": "1234 5678 9012", "address": "123 Main St, City", "gender": "Male", "issue_date": null}"""
-=======
 For each field, provide:
 - value: the extracted text exactly as it appears
 - bbox: bounding box as [x1, y1, x2, y2] where coordinates are normalized (0-1) relative to image dimensions
@@ -54,7 +41,6 @@ Example format:
   "gender": {"value": "Male", "bbox": [0.1, 0.75, 0.3, 0.8]},
   "issue_date": null
 }"""
->>>>>>> 9172dd2 (Frontend Updates)
 
 
 def extraction_agent(state: VerificationState) -> dict:
@@ -90,12 +76,6 @@ def extraction_agent(state: VerificationState) -> dict:
         raw = re.sub(r"```(?:json)?", "", raw).strip().rstrip("`").strip()
         extracted = json.loads(raw)
 
-<<<<<<< HEAD
-        # Filter out None values but keep them as empty string with note
-        cleaned = {}
-        for k, v in extracted.items():
-            cleaned[k] = str(v) if v is not None else ""
-=======
         # Process extracted fields
         cleaned = {}
         bboxes = {}
@@ -105,7 +85,6 @@ def extraction_agent(state: VerificationState) -> dict:
                 bboxes[k] = v.get("bbox")
             else:
                 cleaned[k] = ""
->>>>>>> 9172dd2 (Frontend Updates)
 
         doc_type = cleaned.get("document_type", "Unknown Document")
         logs.append(
@@ -119,10 +98,7 @@ def extraction_agent(state: VerificationState) -> dict:
 
         return {
             "extracted_fields": cleaned,
-<<<<<<< HEAD
-=======
             "field_bboxes": bboxes,
->>>>>>> 9172dd2 (Frontend Updates)
             "document_type": doc_type,
             "logs": logs,
             "current_step": "extraction_done",

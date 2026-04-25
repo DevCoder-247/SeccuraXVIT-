@@ -18,10 +18,7 @@ class FieldResult(TypedDict):
     reason: str
     agent: str
     confidence: float
-<<<<<<< HEAD
-=======
     bbox: Optional[List[float]]  # [x1, y1, x2, y2] normalized 0-1
->>>>>>> 9172dd2 (Frontend Updates)
 
 
 class LogEntry(TypedDict):
@@ -40,10 +37,7 @@ class VerificationState(TypedDict):
 
     # Extraction
     extracted_fields: Dict[str, str]
-<<<<<<< HEAD
-=======
     field_bboxes: Dict[str, Optional[List[float]]]
->>>>>>> 9172dd2 (Frontend Updates)
 
     # Agent Results
     forgery_results: Dict[str, FieldResult]

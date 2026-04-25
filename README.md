@@ -1,6 +1,9 @@
-# 🛡️ DocVerify AI — Autonomous Document Verification System
+# Securra x VIT POC
 
-A production-grade multi-agent document verification system with a **full backend API layer**.
+Securra x VIT is a Proof of Concept (POC) for a **document verification system**.  
+The project demonstrates secure, automated validation of identity and academic documents using advanced verification workflows.  
+It is designed to ensure authenticity, reduce manual effort, and provide a reliable framework for institutions to validate documents efficiently.
+
 
 **Stack:** Streamlit · LangGraph · Gemini 2.5 Flash · FastAPI · Python
 
@@ -25,12 +28,12 @@ A production-grade multi-agent document verification system with a **full backen
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   STREAMLIT FRONTEND                     │
+│                   STREAMLIT FRONTEND                    │
 │  Upload → Select → Verify → Results → Human Review      │
 └──────────────────────┬──────────────────────────────────┘
                        │
          ┌─────────────▼─────────────┐
-         │    LANGGRAPH ORCHESTRATOR  │
+         │    LANGGRAPH ORCHESTRATOR │
          └──────┬────────────────────┘
                 │
         ┌───────▼────────┐
@@ -39,29 +42,29 @@ A production-grade multi-agent document verification system with a **full backen
         └───────┬────────┘
          ┌──────┴──────┐
          │             │
-┌────────▼───┐  ┌──────▼────────────────────────────────┐
-│ Forgery    │  │ KYC Agent — TWO PHASES                 │
-│ Detection  │  │                                        │
-│ Agent      │  │  Phase 1: API Router (Gemini-powered)  │
-│            │  │  ┌────────────────────────────────┐    │
-│ - Pixels   │  │  │ Decides: which API, which fields│   │
-│ - Fonts    │  │  └──────────────┬─────────────────┘   │
-│ - Seals    │  │                 │                      │
-│ - Layout   │  │  ┌──────────────▼──────────────────┐   │
+┌────────▼───┐  ┌──────▼──────────────────────────────────┐
+│ Forgery    │  │ KYC Agent — TWO PHASES                  │
+│ Detection  │  │                                         │
+│ Agent      │  │  Phase 1: API Router (Gemini-powered)   │
+│            │  │  ┌─────────────────────────────────┐    │
+│ - Pixels   │  │  │ Decides: which API, which fields│    │
+│ - Fonts    │  │  └──────────────┬──────────────────┘    │
+│ - Seals    │  │                 │                       │
+│ - Layout   │  │  ┌──────────────▼───────────────────┐   │
 └────────┬───┘  │  │  FASTAPI BACKEND                 │   │
          │      │  │  /api/college/verify-student     │   │
          │      │  │  /api/government/verify-aadhaar  │   │
          │      │  │  /api/corporate/verify-*         │   │
-         │      │  └──────────────┬──────────────────┘   │
-         │      │                 │                      │
-         │      │  Statuses:      │                      │
-         │      │  VALID      → green (verified)         │
-         │      │  NOT_FOUND  → red   (invalid)          │
+         │      │  └──────────────┬───────────────────┘   │
+         │      │                 │                       │
+         │      │  Statuses:      │                       │
+         │      │  VALID      → green (verified)          │
+         │      │  NOT_FOUND  → red   (invalid)           │
          │      │  UNREACHABLE→ amber (unverifiable)      │
-         │      │                 │                      │
+         │      │                 │                       │
          │      │  Phase 2: Rule Engine (remaining fields)│
          │      │  Format/expiry/pattern checks           │
-         │      └────────────────────────────────────────┘
+         │      └─────────────────────────────────────────┘
          │                        │
          └──────────┬─────────────┘
                     │
@@ -70,7 +73,7 @@ A production-grade multi-agent document verification system with a **full backen
           │ Agent            │  APPROVED / REVIEW / REJECTED
           └─────────┬────────┘
                     │
-          ┌─────────▼──────────────────────────────┐
+          ┌─────────▼───────────────────────────────┐
           │ Human-in-the-Loop Review                │
           │ Red/Amber → manual approve/reject       │
           │ All decisions → append to audit log     │
@@ -107,6 +110,7 @@ doc_verifier/
 │   ├── forgery_agent.py      # Forensic analysis
 │   ├── kyc_agent.py          # API + Rule-based KYC
 │   └── decision_agent.py     # Final verdict
+│   └── overlay_agent.py      # Highlight the Fields
 │
 └── utils/
     ├── logger.py             # CSV/JSON log export
@@ -309,4 +313,6 @@ REGISTERED_CLIENTS = [
 
 ## 📄 License
 
-This project is for educational and demonstration purposes.
+All rights for this project are reserved by **Securra**.  
+Unauthorized use, distribution, or modification of the code, documentation, or related assets is strictly prohibited.  
+This Proof of Concept is intended solely for evaluation and demonstration purposes under the ownership of Securra.
